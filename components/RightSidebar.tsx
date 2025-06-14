@@ -15,7 +15,28 @@ export default function RightSidebar() {
         {t('dailyCompanion')}
       </h2>
 
-      {/* Today's Saint */}
+      {/* Verse of the Day */}
+      <Card className="sacred-shadow">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="p-1 bg-primary/10 rounded-full">
+              <BookOpen className="h-4 w-4 text-primary" />
+            </div>
+            {t('verseOfDay')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <blockquote className="text-sm italic text-foreground mb-3 leading-relaxed">
+            "{t('verseText')}"
+          </blockquote>
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
+            <span className="font-medium">{t('verseReference')}</span>
+            <span>{t('verseContext')}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Today's Saint 
       <Card className="sacred-shadow">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -33,8 +54,9 @@ export default function RightSidebar() {
           </Badge>
         </CardContent>
       </Card>
+      */}
 
-      {/* Liturgical Information */}
+      {/* Liturgical Information 
       <Card className="sacred-shadow">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -65,6 +87,7 @@ export default function RightSidebar() {
           </div>
         </CardContent>
       </Card>
+      */}
 
       {/* Advertisement Banner 1 - Between Liturgical and Verse */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200/50 dark:border-amber-800/30 p-4 sacred-shadow">
@@ -78,27 +101,6 @@ export default function RightSidebar() {
           <p className="text-xs font-medium text-primary">Deepen Your Faith</p>
         </div>
       </div>
-
-      {/* Verse of the Day */}
-      <Card className="sacred-shadow">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-1 bg-primary/10 rounded-full">
-              <BookOpen className="h-4 w-4 text-primary" />
-            </div>
-            {t('verseOfDay')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <blockquote className="text-sm italic text-foreground mb-3 leading-relaxed">
-            "{t('verseText')}"
-          </blockquote>
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <span className="font-medium">{t('verseReference')}</span>
-            <span>{t('verseContext')}</span>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Word from Catechism */}
       <Card className="sacred-shadow">

@@ -80,15 +80,6 @@ export default function Header({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onToggleDarkMode}
-          className="p-2"
-        >
-          {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
           onClick={onToggleRightSidebar}
           className="lg:hidden p-2"
         >

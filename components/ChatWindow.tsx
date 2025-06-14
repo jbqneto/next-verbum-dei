@@ -11,6 +11,7 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: number;
+  threadId?: string;
   category?: string;
 }
 

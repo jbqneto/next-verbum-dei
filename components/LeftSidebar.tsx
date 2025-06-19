@@ -1,12 +1,12 @@
 'use client';
 
-import { 
-  Search, 
-  BookOpen, 
-  Heart, 
-  Brain, 
-  GraduationCap, 
-  Calendar, 
+import {
+  Search,
+  BookOpen,
+  Heart,
+  Brain,
+  GraduationCap,
+  Calendar,
   Cross,
   X,
   ChevronRight
@@ -14,24 +14,31 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { ContextType } from '@/model/models';
 
 interface LeftSidebarProps {
   onClose: () => void;
-  onCategorySelect: (category: string) => void;
-  selectedCategory: string | null;
+  onCategorySelect: (category: ContextType | undefined) => void;
+  selectedCategory: ContextType | undefined;
+}
+
+type ContextMenu = {
+  icon: any;
+  context: ContextType;
+  label: any;
+  color: string;
 }
 
 export default function LeftSidebar({ onClose, onCategorySelect, selectedCategory }: LeftSidebarProps) {
   const { t } = useTranslation();
 
-  const menuItems = [
-    { icon: Search, label: t('askCatechism'), color: 'text-blue-600' },
-    { icon: BookOpen, label: t('exploreBible'), color: 'text-green-600' },
-    { icon: Heart, label: t('dailyPrayers'), color: 'text-red-600' },
-    { icon: Brain, label: t('moralTeachings'), color: 'text-purple-600' },
-    { icon: GraduationCap, label: t('studyMode'), color: 'text-orange-600' },
-    { icon: Calendar, label: t('liturgicalCalendar'), color: 'text-indigo-600' },
-    { icon: Cross, label: t('confessionGuide'), color: 'text-amber-600' },
+  const menuItems: ContextMenu[] = [
+    { icon: Search, context: ContextType.CATECHISM, label: t('askCatechism'), color: 'text-blue-600' },
+    { icon: BookOpen, context: ContextType.BIBLE, label: t('exploreBible'), color: 'text-green-600' },
+    { icon: Heart, context: ContextType.PRAYERS, label: t('dailyPrayers'), color: 'text-red-600' },
+    { icon: Brain, context: ContextType.MORAL, label: t('moralTeachings'), color: 'text-purple-600' },
+    { icon: Calendar, context: ContextType.CALENDAR, label: t('liturgicalCalendar'), color: 'text-indigo-600' },
+    { icon: Cross, context: ContextType.CONFESSION, label: t('confessionGuide'), color: 'text-amber-600' },
   ];
 
   return (
@@ -54,8 +61,8 @@ export default function LeftSidebar({ onClose, onCategorySelect, selectedCategor
           <div className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = selectedCategory === item.label;
-              
+              const isActive = selectedCategory === item.context;
+
               return (
                 <Button
                   key={item.label}
@@ -64,7 +71,7 @@ export default function LeftSidebar({ onClose, onCategorySelect, selectedCategor
                     "w-full justify-start p-3 h-auto text-left hover:bg-accent/50 transition-all duration-200",
                     isActive && "bg-accent/20 border-l-4 border-primary"
                   )}
-                  onClick={() => onCategorySelect(item.label)}
+                  onClick={() => onCategorySelect(item.context)}
                 >
                   <Icon className={cn("h-5 w-5 mr-3 flex-shrink-0", item.color)} />
                   <span className="flex-1 text-sm font-medium">{item.label}</span>
@@ -80,8 +87,8 @@ export default function LeftSidebar({ onClose, onCategorySelect, selectedCategor
       <div className="flex-shrink-0 px-6 pb-4">
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 p-3 sacred-shadow">
           <div className="text-center">
-            <img 
-              src="https://images.pexels.com/photos/8468473/pexels-photo-8468473.jpeg?auto=compress&cs=tinysrgb&w=250&h=60&fit=crop" 
+            <img
+              src="https://images.pexels.com/photos/8468473/pexels-photo-8468473.jpeg?auto=compress&cs=tinysrgb&w=250&h=60&fit=crop"
               alt="Catholic Apps Advertisement"
               className="w-full h-12 object-cover rounded-md mb-2"
             />

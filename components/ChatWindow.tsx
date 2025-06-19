@@ -5,31 +5,34 @@ import { Send, Mic, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from 'react-i18next';
+import { ContextType } from '@/model/models';
 
 interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'ai';
   timestamp: number;
+  sender: 'user' | 'ai';
   threadId?: string;
-  category?: string;
+  context?: ContextType;
 }
 
 interface ChatWindowProps {
-  selectedCategory: string | null;
+  selectedContext: ContextType | undefined;
 }
 
-export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
+export default function ChatWindow({ selectedContext }: ChatWindowProps) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
+  const [threadId, setThreadId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
+      timestamp: Date.now(),
       text: t('welcomeMessage'),
       sender: 'ai',
-      timestamp: Date.now()
     }
   ]);
+
   const [inputText, setInputText] = useState('');
 
   useEffect(() => {
@@ -77,66 +80,74 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
     return 'As your Catholic spiritual assistant, I\'m here to help you explore the rich teachings of our faith. How would you like me to assist you further?';
   };
 
-  useEffect(() => {
-    if (selectedCategory) {
-      const categoryMessage: Message = {
-        id: Date.now().toString(),
-        text: getCategoryResponse(selectedCategory),
-        sender: 'ai',
-        timestamp: Date.now(),
-        category: selectedCategory
-      };
-      setMessages(prev => [...prev, categoryMessage]);
-    }
-  }, [selectedCategory, t]);
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
+      context: selectedContext,
+      timestamp: Date.now(),
       text: inputText,
-      sender: 'user',
-      timestamp: Date.now()
+      sender: 'user'
     };
 
     setMessages(prev => [...prev, newMessage]);
     setInputText('');
 
-    // Simulate AI response based on category context
-    setTimeout(() => {
-      let responseText = `Thank you for your question about "${inputText}". `;
-      
-      if (selectedCategory) {
-        if (selectedCategory === t('askCatechism')) {
-          responseText += 'According to the Catechism of the Catholic Church, this teaching helps us understand our faith more deeply. Let me guide you through the relevant passages and their meaning for our spiritual life.';
-        } else if (selectedCategory === t('exploreBible')) {
-          responseText += 'This biblical passage reveals God\'s love and plan for us. Let me help you understand its context, meaning, and how it applies to your life as a Catholic.';
-        } else if (selectedCategory === t('dailyPrayers')) {
-          responseText += 'Prayer is our conversation with God. Let me guide you through this prayer and help you understand its significance in our Catholic tradition.';
-        } else if (selectedCategory === t('moralTeachings')) {
-          responseText += 'The Church\'s moral teaching provides clear guidance rooted in Scripture and Tradition. Let me explain the principles that can help you make decisions aligned with Catholic values.';
-        } else if (selectedCategory === t('studyMode')) {
-          responseText += 'This is an important aspect of Catholic doctrine. Let me break this down systematically to help you understand and remember these teachings.';
-        } else if (selectedCategory === t('liturgicalCalendar')) {
-          responseText += 'The liturgical calendar helps us live in rhythm with Christ\'s life and the Church\'s celebrations. Let me explain the significance of this season or feast.';
-        } else if (selectedCategory === t('confessionGuide')) {
-          responseText += 'The Sacrament of Reconciliation is a beautiful encounter with God\'s mercy. Let me guide you through this aspect of confession and help you prepare your heart.';
-        } else {
-          responseText += 'As your Catholic spiritual assistant, I\'m here to help you explore the rich teachings of our faith. How would you like me to assist you further?';
-        }
-      } else {
-        responseText += 'As your Catholic spiritual assistant, I\'m here to help you explore the rich teachings of our faith. How would you like me to assist you further?';
-      }
+    const res = await fetch("/api/assistant", {
+      method: "POST",
+      body: JSON.stringify({ threadId, message: inputText, contextType: selectedContext }),
+    });
 
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: responseText,
-        sender: 'ai',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+    const newThreadId = res.headers.get("X-Thread-Id");
+
+    if (newThreadId) setThreadId(newThreadId);
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let assistantText = "";
+    let isDone = false;
+
+    while (!isDone) {
+      let { done, value } = await reader.read();
+
+      isDone = done;
+
+      if (value) {
+
+        assistantText += decoder.decode(value);
+
+
+        console.log("TExt: assista")
+
+      }
+    }
+
+    if (assistantText === "") return;
+
+    const now = Date.now();
+
+    const data = JSON.parse(assistantText);
+
+
+    console.log("Text data: ", data);
+
+    const text = data.message?.content.reduce((prev: string, current: any) => {
+      if (current.type !== "text") return prev;
+
+      return prev + " " + current.text.value;
+    }, "");
+
+    setMessages(prev => [
+      ...prev, {
+        sender: "ai",
+        text,
+        timestamp: now,
+        id: now.toString(),
+        context: selectedContext,
+        threadId
+      }]);
+
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -146,16 +157,16 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
     }
   };
 
-  const currentSuggestions = selectedCategory ? 
-    getCategoryPrompts(selectedCategory) : 
+  const currentSuggestions = selectedContext ?
+    getCategoryPrompts(selectedContext) :
     t('catechismSuggestions', { returnObjects: true }) as string[];
 
   return (
     <div className="flex flex-col h-full">
       {/* Category Header */}
-      {selectedCategory && (
+      {selectedContext && (
         <div className="bg-primary/5 border-b border-border px-6 py-3 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-primary">{selectedCategory}</h2>
+          <h2 className="text-lg font-semibold text-primary">{selectedContext}</h2>
           <p className="text-sm text-muted-foreground">{t('askAnything')}</p>
         </div>
       )}
@@ -170,8 +181,8 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
             <div
               className={`
                 max-w-3xl rounded-2xl p-4 sacred-shadow
-                ${message.sender === 'user' 
-                  ? 'bg-primary/10 text-foreground' 
+                ${message.sender === 'user'
+                  ? 'bg-primary/10 text-foreground'
                   : 'message-bubble text-foreground'
                 }
               `}
@@ -211,8 +222,8 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
       <div className="px-6 pb-2 flex-shrink-0">
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200/50 dark:border-purple-800/30 p-3 sacred-shadow">
           <div className="flex items-center justify-center gap-4">
-            <img 
-              src="https://images.pexels.com/photos/8468469/pexels-photo-8468469.jpeg?auto=compress&cs=tinysrgb&w=120&h=60&fit=crop" 
+            <img
+              src="https://images.pexels.com/photos/8468469/pexels-photo-8468469.jpeg?auto=compress&cs=tinysrgb&w=120&h=60&fit=crop"
               alt="Catholic Education Advertisement"
               className="w-20 h-12 object-cover rounded-md"
             />
@@ -220,8 +231,8 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
               <p className="text-xs font-medium text-primary">Catholic Online Courses</p>
               <p className="text-xs text-muted-foreground">Theology • Scripture • Spirituality</p>
             </div>
-            <img 
-              src="https://images.pexels.com/photos/8468472/pexels-photo-8468472.jpeg?auto=compress&cs=tinysrgb&w=120&h=60&fit=crop" 
+            <img
+              src="https://images.pexels.com/photos/8468472/pexels-photo-8468472.jpeg?auto=compress&cs=tinysrgb&w=120&h=60&fit=crop"
               alt="Spiritual Retreats Advertisement"
               className="w-20 h-12 object-cover rounded-md"
             />
@@ -235,14 +246,14 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
           <Button variant="outline" size="sm" className="p-2 flex-shrink-0">
             <Plus className="h-4 w-4" />
           </Button>
-          
+
           <div className="flex-1 relative">
             <Textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={selectedCategory ? 
-                t('inputPlaceholderCategory', { category: selectedCategory.toLowerCase() }) : 
+              placeholder={selectedContext ?
+                t('inputPlaceholderCategory', { category: selectedContext.toLowerCase() }) :
                 t('inputPlaceholder')
               }
               className="min-h-[60px] pr-20 resize-none sacred-shadow"
@@ -252,9 +263,9 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
               <Button variant="ghost" size="sm" className="p-2">
                 <Mic className="h-4 w-4" />
               </Button>
-              <Button 
+              <Button
                 onClick={handleSendMessage}
-                size="sm" 
+                size="sm"
                 className="p-2"
                 disabled={!inputText.trim()}
               >
@@ -263,7 +274,7 @@ export default function ChatWindow({ selectedCategory }: ChatWindowProps) {
             </div>
           </div>
         </div>
-        
+
         <p className="text-xs text-muted-foreground text-center mt-3">
           {t('disclaimer')}
         </p>

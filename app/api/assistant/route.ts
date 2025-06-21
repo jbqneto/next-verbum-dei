@@ -84,6 +84,8 @@ export const POST = async (req: NextRequest) => {
       instructions = `Important: ${context}.` + instructions;
     }
 
+    instructions += 'At the end of the explanatory text, break 2 lines with <br/><br/> and a text like this "tags: [$LIST_OF_RELATED_TAGS_IN_ENGLISH]".';
+
     let myRun = await openai.beta.threads.runs.createAndPoll(thread.id, {
       assistant_id: ASSISTANT_ID!,
       instructions

@@ -55,7 +55,7 @@ export default function Home() {
   if (!selectedLanguage) return <></>
 
   return (
-    <div className={`h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
+    <div className={`h-screen min-h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
       <Header
         onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
         onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
@@ -84,10 +84,11 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <div className={`
-          fixed lg:relative z-30 h-full w-80 bg-card border-r border-border parchment-texture
-          transform transition-transform duration-300 ease-in-out
-          ${leftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0
+            fixed lg:relative z-30 w-80 bg-card border-r border-border parchment-texture
+            transform transition-transform duration-300 ease-in-out
+            ${leftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            lg:translate-x-0
+            inset-y-0 lg:h-full
         `}>
           <LeftSidebar
             onClose={() => setLeftSidebarOpen(false)}
@@ -103,10 +104,11 @@ export default function Home() {
 
         {/* Right Sidebar */}
         <div className={`
-          fixed lg:relative z-30 h-full w-80 bg-card border-l border-border parchment-texture
+          fixed lg:relative z-30 w-80 bg-card border-l border-border parchment-texture
           transform transition-transform duration-300 ease-in-out right-0
           ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
           lg:translate-x-0 hidden lg:block
+          inset-y-0 lg:h-full
         `}>
           <RightSidebar />
         </div>

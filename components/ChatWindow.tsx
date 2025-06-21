@@ -1,11 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Send, Mic, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Mic, Plus, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from 'react-i18next';
 import { ContextType } from '@/model/models';
+
+import Cookies from 'js-cookie';
+import { cleanHtmlResponse } from '@/app/common/util';
+
+const CONFESSION_FILE_URL = "https://chat.openai.com/share/file-Gj4PtPxNhfjnyVuWMyT6uG"; // ou um link direto armazenado externamente
+const COOLDOWN_MS = Number(process.env.NEXT_PUBLIC_COOLDOWN_MS || 60) * 1000;
+const MAX_LENGTH = 120;
 
 interface Message {
   id: string;
@@ -18,11 +25,16 @@ interface Message {
 
 interface ChatWindowProps {
   selectedContext: ContextType | undefined;
+  language: string
 }
 
-export default function ChatWindow({ selectedContext }: ChatWindowProps) {
+export default function ChatWindow({ selectedContext, language }: ChatWindowProps) {
   const { t } = useTranslation();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [cooldown, setCooldown] = useState(0);
+  const [lastMessage, setLastMessage] = useState<Date | null>(null);
   const [threadId, setThreadId] = useState<string | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -36,8 +48,38 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
   const [inputText, setInputText] = useState('');
 
   useEffect(() => {
+    const threadId = Cookies.get('threadId');
+    const lastMessage = Cookies.get('lastMessage');
+
+    setThreadId(threadId);
+
+    if (lastMessage) {
+      setLastMessage(new Date(lastMessage));
+    }
+
     setMounted(true);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 5_000);
+
   }, []);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+
+    if (cooldown > 0) {
+      setTimeout(() => {
+        setCooldown(cooldown - 1000);
+      }, 1000);
+    }
+
+  }, [cooldown]);
 
   const getCategoryPrompts = (category: string) => {
     const categoryKey = category.toLowerCase().replace(/\s+/g, '');
@@ -81,7 +123,7 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || loading || cooldown > 0) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -91,62 +133,85 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
       sender: 'user'
     };
 
+    setLoading(true);
     setMessages(prev => [...prev, newMessage]);
     setInputText('');
 
-    const res = await fetch("/api/assistant", {
-      method: "POST",
-      body: JSON.stringify({ threadId, message: inputText, contextType: selectedContext }),
-    });
+    try {
 
-    const newThreadId = res.headers.get("X-Thread-Id");
+      const res = await fetch("/api/assistant", {
+        method: "POST",
+        body: JSON.stringify({ threadId, message: inputText, contextType: selectedContext, language }),
+      });
 
-    if (newThreadId) setThreadId(newThreadId);
+      const newThreadId = res.headers.get("X-Thread-Id");
 
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-    let assistantText = "";
-    let isDone = false;
+      setLastMessage(new Date());
 
-    while (!isDone) {
-      let { done, value } = await reader.read();
+      if (newThreadId) setThreadId(newThreadId);
 
-      isDone = done;
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
+      let isDone = false;
 
-      if (value) {
+      while (!isDone) {
+        let { done, value } = await reader.read();
 
-        assistantText += decoder.decode(value);
+        isDone = done;
 
+        if (value) {
 
-        console.log("TExt: assista")
+          assistantText += decoder.decode(value);
 
+          console.log("TExt: assista")
+
+        }
       }
+
+      if (assistantText === "") {
+
+        setMessages(prev => [
+          ...prev, {
+            sender: "ai",
+            text: t('requestError'),
+            timestamp: now,
+            id: now.toString(),
+            context: selectedContext,
+            threadId
+          }]);
+
+        return;
+      }
+
+      const now = Date.now();
+
+      const data = JSON.parse(assistantText);
+
+      console.log("Text data: ", data);
+
+      const text = data.message?.content.reduce((prev: string, current: any) => {
+        if (current.type !== "text") return prev;
+
+        return prev + " " + cleanHtmlResponse(current.text?.value);
+      }, "");
+
+      setMessages(prev => [
+        ...prev, {
+          sender: "ai",
+          text,
+          timestamp: now,
+          id: now.toString(),
+          context: selectedContext,
+          threadId
+        }]);
+
+    } catch (error) {
+      console.error("Error on API", error);
+    } finally {
+      setLoading(false);
+      setCooldown(COOLDOWN_MS);
     }
-
-    if (assistantText === "") return;
-
-    const now = Date.now();
-
-    const data = JSON.parse(assistantText);
-
-
-    console.log("Text data: ", data);
-
-    const text = data.message?.content.reduce((prev: string, current: any) => {
-      if (current.type !== "text") return prev;
-
-      return prev + " " + current.text.value;
-    }, "");
-
-    setMessages(prev => [
-      ...prev, {
-        sender: "ai",
-        text,
-        timestamp: now,
-        id: now.toString(),
-        context: selectedContext,
-        threadId
-      }]);
 
   };
 
@@ -173,7 +238,7 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {messages.map((message) => (
+        {messages.map((message, i) => (
           <div
             key={message.id}
             className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -187,8 +252,8 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
                 }
               `}
             >
-              <p className="text-sm leading-relaxed">{message.text}</p>
-              <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/20">
+              <div dangerouslySetInnerHTML={{ __html: message.text }} className="text-sm leading-relaxed" />
+              <div ref={i === messages.length - 1 ? scrollRef : undefined} className="flex justify-between items-center mt-3 pt-2 border-t border-border/20">
                 <span className="text-xs text-muted-foreground">
                   {message.sender === 'ai' ? t('appName') : t('you')}
                 </span>
@@ -199,9 +264,19 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
             </div>
           </div>
         ))}
+        <div className="text-center">
+          <a
+            href={CONFESSION_FILE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            📄 {t("downloadConfessionGuide") || "Download Exame de Consciência do Pe. Paulo"}
+          </a>
+        </div>
       </div>
 
-      {/* Suggested Questions */}
+      {/* TODO: Maybe add latter > Suggested Questions 
       <div className="px-6 py-4 border-t border-border/20 flex-shrink-0">
         <div className="flex flex-wrap gap-2 mb-4">
           {currentSuggestions.slice(0, 3).map((suggestion) => (
@@ -217,6 +292,8 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
           ))}
         </div>
       </div>
+
+      */}
 
       {/* Advertisement Banner - Above Input Area */}
       <div className="px-6 pb-2 flex-shrink-0">
@@ -242,39 +319,54 @@ export default function ChatWindow({ selectedContext }: ChatWindowProps) {
 
       {/* Input Area */}
       <div className="p-6 border-t border-border bg-card/50 flex-shrink-0">
-        <div className="flex items-end gap-3 max-w-4xl mx-auto">
-          <Button variant="outline" size="sm" className="p-2 flex-shrink-0">
-            <Plus className="h-4 w-4" />
-          </Button>
-
-          <div className="flex-1 relative">
-            <Textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={selectedContext ?
-                t('inputPlaceholderCategory', { category: selectedContext.toLowerCase() }) :
-                t('inputPlaceholder')
-              }
-              className="min-h-[60px] pr-20 resize-none sacred-shadow"
-              rows={1}
-            />
-            <div className="absolute right-2 bottom-2 flex gap-1">
-              <Button variant="ghost" size="sm" className="p-2">
-                <Mic className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleSendMessage}
-                size="sm"
-                className="p-2"
-                disabled={!inputText.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+        {
+          cooldown > 0 ? (
+            <div className="text-center text-sm text-gray-500">
+              ⏳ Aguarde {Math.ceil(cooldown / 1000)} segundos para enviar nova pergunta.
             </div>
-          </div>
-        </div>
+          ) : (
 
+            <div className="flex items-end gap-3 max-w-4xl mx-auto">
+              <div className="flex-1 relative">
+                <div className="text-xs text-right text-muted-foreground">
+                  {inputText.length} / {MAX_LENGTH}
+                </div>
+                <Textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  maxLength={MAX_LENGTH}
+                  disabled={loading || cooldown > 0}
+                  placeholder={selectedContext ?
+                    t('inputPlaceholderCategory', { category: selectedContext.toLowerCase() }) :
+                    t('inputPlaceholder')
+                  }
+                  className="min-h-[60px] pr-20 resize-none sacred-shadow"
+                  rows={1}
+                />
+
+                <div className="absolute right-2 bottom-2 flex gap-1">
+                  {/** TODO: Maybe add this latter
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Mic className="h-4 w-4" />
+                  </Button>
+                   */}
+                  <Button
+                    onClick={handleSendMessage}
+                    size="sm"
+                    className="p-2"
+                    disabled={loading || !inputText.trim()}
+                  >
+                    {loading ? (
+                      <LoaderCircle className='animate-spin' />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         <p className="text-xs text-muted-foreground text-center mt-3">
           {t('disclaimer')}
         </p>

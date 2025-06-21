@@ -1,22 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import LeftSidebar from '@/components/LeftSidebar';
 import ChatWindow from '@/components/ChatWindow';
 import RightSidebar from '@/components/RightSidebar';
 import { ContextType } from '@/model/models';
+import { useTranslation } from 'react-i18next';
+
+import Cookies from 'js-cookie';
 
 export default function Home() {
+  const { i18n } = useTranslation();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [selectedContext, setSelectedContext] = useState<ContextType | undefined>(undefined);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    setSelectedLanguage(lng);
+    Cookies.set("language", lng, { expires: 365 });
+  };
+
+  const handleLanguageSelect = (language: string) => {
+    changeLanguage(language);
+  }
 
   const handleCategorySelect = (context: ContextType | undefined) => {
+    if (selectedContext === context) {
+      context = undefined;
+    }
+
     setSelectedContext(context);
     setLeftSidebarOpen(false); // Close sidebar on mobile after selection
   };
+
+
+  useEffect(() => {
+    const userLang: string | undefined = navigator.language || (navigator as any).userLanguage;
+    let language = Cookies.get('language');
+
+    if (!language && userLang) {
+      language = userLang.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+    }
+
+    if (language) {
+      changeLanguage(language);
+    }
+
+  }, []);
+
+  if (!selectedLanguage) return <></>
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
@@ -24,6 +60,7 @@ export default function Home() {
         onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
         onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onLanguageSelect={handleLanguageSelect}
         darkMode={darkMode}
       />
 
@@ -61,7 +98,7 @@ export default function Home() {
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <ChatWindow selectedContext={selectedContext} />
+          <ChatWindow language={selectedLanguage} selectedContext={selectedContext} />
         </div>
 
         {/* Right Sidebar */}

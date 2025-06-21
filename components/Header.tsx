@@ -9,24 +9,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useEffect } from 'react';
 
 interface HeaderProps {
   onToggleLeftSidebar: () => void;
   onToggleRightSidebar: () => void;
   onToggleDarkMode: () => void;
+  onLanguageSelect: (lng: string) => void;
   darkMode: boolean;
 }
 
-export default function Header({ 
-  onToggleLeftSidebar, 
-  onToggleRightSidebar, 
-  onToggleDarkMode, 
-  darkMode 
+export default function Header({
+  onToggleLeftSidebar,
+  onToggleRightSidebar,
+  onLanguageSelect,
+  onToggleDarkMode,
+  darkMode
 }: HeaderProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
+    onLanguageSelect(lng);
   };
 
   return (
@@ -40,7 +43,7 @@ export default function Header({
         >
           <Menu className="h-5 w-5" />
         </Button>
-        
+
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-full">
             <Cross className="h-6 w-6 text-primary" />
@@ -50,7 +53,7 @@ export default function Header({
             <p className="text-sm text-muted-foreground hidden sm:block">{t('appSubtitle')}</p>
           </div>
         </div>
-        
+
         {/* Bible Quote - Moved from Left Sidebar */}
         <div className="hidden lg:block ml-8 pl-8 border-l border-border">
           <p className="text-xs text-muted-foreground italic">
@@ -76,7 +79,7 @@ export default function Header({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
         <Button
           variant="ghost"
           size="sm"

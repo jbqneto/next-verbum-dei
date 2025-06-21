@@ -3,7 +3,17 @@ export const dynamic = "force-dynamic";
 import { delay } from "@/app/common/util";
 import { ContextType } from "@/model/models";
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from 'next/headers'
+
 import OpenAI from "openai";
+
+const ctxMap: Record<string, string> = {
+  bible: "Use Catholic Bible passages only, cite Book:Chapter:Verse.",
+  confession: "Guide the user through a confession exam with introspective questions, based specially on your files, cathechism and Padre Paulo.",
+  catechism: "Base answer on Catechism, citing paragraphs (e.g. Catechism §1234).",
+  moral: "Base answer on moral from your files and catechism and searches on Padre Paulo.",
+  prayers: "Search the internet, specially on Vatican, Padre Paulo and other trusted websites."
+};
 
 function corsHeaders() {
   return {
@@ -20,27 +30,43 @@ export async function OPTIONS() {
   });
 }
 
+function getClientIp(req: Request): string {
+  const header = req.headers.get("x-forwarded-for") || "";
+  const ip = header.split(",")[0]?.trim();
+  const isValidIp = ip && ip !== "::1" && ip !== "127.0.0.1";
+
+  return isValidIp ? ip : "unknown";
+}
+
 export const POST = async (req: NextRequest) => {
   const API_KEY = process.env.OPENAI_API_KEY;
   const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
 
-  const { threadId, message, contextType } = await req.json();
+  const { threadId, message, contextType, language } = await req.json();
+  const now = Date.now();
+  const userLanguage = language ? '(lang: ' + language + ')' : '';
 
   try {
-
-    const requestMessage = message + " (return the response in HTML format)";
-
-    const userIp = (req as any).ip ?? req.headers.get('x-forwarded-for')?.split(',')[0];
+    const cookieStore = cookies();
+    const lastMessageTime = Number(cookieStore.get('lastMessage')?.value || 0);
     const openai = new OpenAI({ apiKey: API_KEY! });
 
     let context = contextType as ContextType;
 
+    if (now - lastMessageTime < 60_000) {
+      return NextResponse.json({ error: 'WAIT' }, { status: 429 });
+    }
+
+    const finalThreadId = threadId ?? cookieStore.get('threadId')?.value;
+
+    console.log("finalThreadId: ", finalThreadId);
+
     // 1. Creates or reuse thread
-    const thread = threadId ? { id: threadId } : await openai.beta.threads.create({
+    const thread = finalThreadId ? { id: finalThreadId } : await openai.beta.threads.create({
       messages: [
         {
           role: 'user',
-          content: message,
+          content: userLanguage + ':' + message,
         }
       ]
     });
@@ -51,31 +77,22 @@ export const POST = async (req: NextRequest) => {
       content: message,
     });
 
-    console.log(`User: ${userIp} - Thread: ${thread.id}`);
+    const contextText = context ? ctxMap[context] : null;
+    let instructions = "Do not repeat the use message. Return the answer strictly as formatted HTML with appropriate tags such as <h2>, <p>, <ul>, <strong>, <em>, <b>,<i>, <br/>. Do not include any explanation or summary outside HTML or other format.";
 
-    const ctxMap: Record<string, string> = {
-      bible: "Use Catholic Bible passages only, cite Book:Chapter:Verse.",
-      confession: "Guide the user through a confession exam with introspective questions, based specially on your files, cathechism and Padre Paulo.",
-      catechism: "Base answer on Catechism, citing paragraphs (e.g. Catechism §1234).",
-      moral: "Base answer on moral from your files and catechism and searches on Padre Paulo.",
-      prayers: "Search the internet, specially on Vatican, Padre Paulo and other trusted websites."
-    };
+    if (contextText) {
+      instructions = `Important: ${context}.` + instructions;
+    }
 
     let myRun = await openai.beta.threads.runs.createAndPoll(thread.id, {
-      assistant_id: ASSISTANT_ID,
-      additional_messages: [
-        {
-          role: 'assistant',
-          content: 'Answer in html format'
-        }
-      ],
-      ...(contextType && { additional_instructions: { content: ctxMap[context] } })
+      assistant_id: ASSISTANT_ID!,
+      instructions
     });
 
     let runStatus = myRun.status;
 
     while (runStatus === "queued" || runStatus === "in_progress") {
-      await delay(15000); // 15 seconds delay
+      await delay(5000); // 15 seconds delay
 
       myRun = await openai.beta.threads.runs.retrieve(myRun.id, {
         thread_id: threadId
@@ -93,31 +110,41 @@ export const POST = async (req: NextRequest) => {
     }
 
     const messages = await openai.beta.threads.messages.list(thread.id);
-    let msgs = [];
 
-    for (const message of messages.getPaginatedItems()) {
-      console.log("Msg: ", message);
-      msgs.push({
-        role: message.role,
-        content: message.content
-      });
-    }
+    const responseMessages = messages.getPaginatedItems().filter(m => m.role === 'assistant');
 
     // 4. Responde com stream + threadId
     const headers = new Headers({
       "Content-Type": "application/json",
-      "X-Thread-Id": thread.id,
+      "X-Thread-Id": thread.id
     });
 
+    headers.set('Set-Cookie', [
+      `threadId=${thread.id}; Path=/; HttpOnly; Max-Age=31536000`,
+      `lastMessage=${now}; Path=/; HttpOnly; Max-Age=60`
+    ].join(', '));
+
+    const responseMessage = responseMessages.at(0);
+
     const payload = {
-      message: msgs[0],
-      context: contextType
+      message: {
+        id: responseMessage?.id,
+        content: responseMessage?.content ?? "",
+        created_at: responseMessage?.created_at
+      },
+      context: contextType,
+      threadId
     };
 
     return Response.json(payload, {
       headers,
     });
-  } catch (error) {
-    console.error("Error on OpenAPI", error);
+  } catch (err: any) {
+    console.error("Error on OpenAPI", err);
+    return Response.json({
+      error: err.message
+    }, {
+      status: 500
+    });
   }
 }

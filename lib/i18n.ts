@@ -7,7 +7,7 @@ const resources = {
       // Header
       appName: "Verbum Dei AI",
       appSubtitle: "Catholic Spiritual Assistant",
-      
+
       // Left Sidebar
       exploreTitle: "Explore Faith",
       askCatechism: "Ask about the Catechism",
@@ -18,7 +18,7 @@ const resources = {
       liturgicalCalendar: "Liturgical Calendar",
       confessionGuide: "Confession Guide",
       spiritualGuide: "Spiritual Guide",
-      
+
       // Right Sidebar
       dailyCompanion: "Daily Spiritual Companion",
       todaysSaint: "Today's Saint",
@@ -30,7 +30,7 @@ const resources = {
       color: "Color",
       season: "Season",
       week: "Week",
-      
+
       // Chat
       welcomeMessage: "Peace be with you! I am Verbum Dei AI, your Catholic spiritual assistant. How may I help you deepen your faith today?",
       askAnything: "Ask me anything about this topic",
@@ -38,7 +38,8 @@ const resources = {
       inputPlaceholderCategory: "Ask about {{category}}...",
       disclaimer: "Verbum Dei AI can make mistakes. Always consult with your priest or spiritual director for important matters.",
       you: "You",
-      
+      requestError: 'Sorry but we are having problems on our servers now. Try again latter',
+
       // Suggestions
       catechismSuggestions: [
         "What does the Catechism say about prayer?",
@@ -75,7 +76,7 @@ const resources = {
         "What are the steps of a good confession?",
         "Help me understand the Act of Contrition"
       ],
-      
+
       // Sample data
       saintName: "St. Francis of Assisi",
       saintDescription: "Founder of the Franciscan order, known for his devotion to poverty and nature.",
@@ -100,7 +101,7 @@ const resources = {
       // Header
       appName: "Verbum Dei AI",
       appSubtitle: "Assistente Espiritual Católico",
-      
+
       // Left Sidebar
       exploreTitle: "Explorar a Fé",
       askCatechism: "Perguntar sobre o Catecismo",
@@ -111,7 +112,7 @@ const resources = {
       liturgicalCalendar: "Calendário Litúrgico",
       confessionGuide: "Guia de Confissão",
       spiritualGuide: "Guia Espiritual",
-      
+
       // Right Sidebar
       dailyCompanion: "Companheiro Espiritual Diário",
       todaysSaint: "Santo do Dia",
@@ -123,7 +124,7 @@ const resources = {
       color: "Cor",
       season: "Tempo",
       week: "Semana",
-      
+
       // Chat
       welcomeMessage: "A paz esteja convosco! Eu sou o Verbum Dei AI, seu assistente espiritual católico. Como posso ajudá-lo a aprofundar sua fé hoje?",
       askAnything: "Pergunte-me qualquer coisa sobre este tópico",
@@ -131,7 +132,8 @@ const resources = {
       inputPlaceholderCategory: "Pergunte sobre {{category}}...",
       disclaimer: "Verbum Dei AI pode cometer erros. Sempre consulte seu padre ou diretor espiritual para assuntos importantes.",
       you: "Você",
-      
+      requestError: 'Desculpa, mas estamos com um problema em nosso servidor agora. Tente mais tarde.',
+
       // Suggestions
       catechismSuggestions: [
         "O que o Catecismo diz sobre a oração?",
@@ -168,7 +170,7 @@ const resources = {
         "Quais são os passos de uma boa confissão?",
         "Ajude-me a entender o Ato de Contrição"
       ],
-      
+
       // Sample data
       saintName: "São Francisco de Assis",
       saintDescription: "Fundador da ordem franciscana, conhecido por sua devoção à pobreza e à natureza.",

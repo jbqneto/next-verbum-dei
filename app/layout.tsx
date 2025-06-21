@@ -3,13 +3,13 @@ import type { Metadata } from 'next';
 import { Merriweather, Inter } from 'next/font/google';
 import I18nProvider from '@/components/I18nProvider';
 
-const merriweather = Merriweather({ 
+const merriweather = Merriweather({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
   variable: '--font-merriweather'
 });
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter'
 });
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html>
       <body className={`${merriweather.variable} ${inter.variable} font-serif`}>
         <I18nProvider>
           {children}

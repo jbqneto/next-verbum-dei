@@ -51,6 +51,7 @@
     "eslint-config-next": "13.5.1",
     "i18next": "^23.7.6",
     "input-otp": "^1.2.4",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.446.0",
     "next": "13.5.1",
     "next-themes": "^0.3.0",
@@ -72,6 +73,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "jslint": "^0.12.1"
   }
 }

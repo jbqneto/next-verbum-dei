@@ -264,16 +264,7 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
             </div>
           </div>
         ))}
-        <div className="text-center">
-          <a
-            href={CONFESSION_FILE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            📄 {t("downloadConfessionGuide") || "Download Exame de Consciência do Pe. Paulo"}
-          </a>
-        </div>
+
       </div>
 
       {/* TODO: Maybe add latter > Suggested Questions 

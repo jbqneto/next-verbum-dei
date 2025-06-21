@@ -10,9 +10,13 @@ import { ContextType } from '@/model/models';
 import Cookies from 'js-cookie';
 import { cleanHtmlResponse } from '@/app/common/util';
 
-const CONFESSION_FILE_URL = "https://chat.openai.com/share/file-Gj4PtPxNhfjnyVuWMyT6uG"; // ou um link direto armazenado externamente
 const COOLDOWN_MS = Number(process.env.NEXT_PUBLIC_COOLDOWN_MS || 60) * 1000;
 const MAX_LENGTH = 120;
+
+const CONFESSION_FILES = {
+  'en': '/files/confession-en.pdf',
+  'pt': '/files/confissao-Pe-Paulo.pdf'
+}
 
 interface Message {
   id: string;

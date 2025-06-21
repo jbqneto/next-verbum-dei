@@ -80,6 +80,8 @@ export default function Header({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        { /** TODO: Not working - FIx it latter
+
         <Button
           variant="ghost"
           size="sm"
@@ -88,6 +90,7 @@ export default function Header({
         >
           <Calendar className="h-5 w-5" />
         </Button>
+         */}
       </div>
     </header>
   );

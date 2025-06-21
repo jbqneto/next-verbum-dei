@@ -88,7 +88,8 @@ export const POST = async (req: NextRequest) => {
 
     let myRun = await openai.beta.threads.runs.createAndPoll(thread.id, {
       assistant_id: ASSISTANT_ID!,
-      instructions
+      instructions,
+      additional_instructions: "Identify the subject of the question and if is not related to the bible, catholic church or cathecism just answer that is not related to our focus."
     });
 
     let runStatus = myRun.status;

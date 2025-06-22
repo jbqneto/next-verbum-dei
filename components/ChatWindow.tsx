@@ -10,7 +10,7 @@ import { ContextType } from '@/model/models';
 import Cookies from 'js-cookie';
 import { cleanHtmlResponse } from '@/app/common/util';
 
-const COOLDOWN_MS = Number(process.env.NEXT_PUBLIC_COOLDOWN_MS || 60) * 1000;
+const COOLDOWN_MS = Number(process.env.NEXT_PUBLIC_COOLDOWN || 120) * 1000;
 const MAX_LENGTH = 120;
 
 const CONFESSION_FILES = {

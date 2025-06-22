@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Merriweather, Inter } from 'next/font/google';
 import I18nProvider from '@/components/I18nProvider';
+import { Analytics } from '@vercel/analytics/next';
 
 const merriweather = Merriweather({
   subsets: ['latin'],
@@ -30,6 +31,7 @@ export default function RootLayout({
         <I18nProvider>
           {children}
         </I18nProvider>
+        <Analytics />
       </body>
     </html>
   );

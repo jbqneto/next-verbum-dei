@@ -9,9 +9,12 @@ import { ContextType } from '@/model/models';
 import { useTranslation } from 'react-i18next';
 
 import Cookies from 'js-cookie';
+import { useAuth } from '@/hooks/useAuth';
+import AuthModal from '@/components/AuthModal';
 
 export default function Home() {
   const { i18n } = useTranslation();
+  const { isAuthenticated, loading } = useAuth();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -48,14 +51,29 @@ export default function Home() {
 
     if (language) {
       changeLanguage(language);
+    } else {
+      changeLanguage('en');
     }
 
   }, []);
 
-  if (!selectedLanguage) return <></>
+  if (!selectedLanguage || loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="p-4 bg-primary/10 rounded-full mb-4 inline-block">
+            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-screen min-h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
+      { /** TODO: Add login modal 
+      <AuthModal open={!isAuthenticated} />
+      */ }
       <Header
         onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
         onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}

@@ -40,6 +40,9 @@ const resources = {
       you: "You",
       requestError: 'Sorry but we are having problems on our servers now. Try again latter',
 
+      // Modal
+      welcomeBack: 'Welcome back',
+
       // Suggestions
       catechismSuggestions: [
         "What does the Catechism say about prayer?",

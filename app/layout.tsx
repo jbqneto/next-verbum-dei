@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Merriweather, Inter } from 'next/font/google';
 import I18nProvider from '@/components/I18nProvider';
 import { Analytics } from '@vercel/analytics/next';
+import { AuthProvider } from '@/hooks/useAuth';
 
 const merriweather = Merriweather({
   subsets: ['latin'],
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html>
       <body className={`${merriweather.variable} ${inter.variable} font-serif`}>
         <I18nProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </I18nProvider>
         <Analytics />
       </body>

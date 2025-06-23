@@ -55,6 +55,8 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
     const threadId = Cookies.get('threadId');
     const lastMessage = Cookies.get('lastMessage');
 
+    console.log("LastMessage: " + lastMessage);
+
     setThreadId(threadId);
 
     if (lastMessage) {
@@ -168,8 +170,6 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
 
           assistantText += decoder.decode(value);
 
-          console.log("TExt: assista")
-
         }
       }
 
@@ -215,6 +215,7 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
     } finally {
       setLoading(false);
       setCooldown(COOLDOWN_MS);
+      Cookies.set('lastMessage', '' + Date.now());
     }
 
   };

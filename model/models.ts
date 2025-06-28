@@ -6,3 +6,9 @@ export enum ContextType {
     CALENDAR = "calendar",
     PRAYERS = "prayers"
 }
+
+export type CreateUserDto = {
+    name: string;
+    email: string;
+    password: string;
+}

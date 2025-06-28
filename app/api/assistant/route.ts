@@ -30,14 +30,6 @@ export async function OPTIONS() {
   });
 }
 
-function getClientIp(req: Request): string {
-  const header = req.headers.get("x-forwarded-for") || "";
-  const ip = header.split(",")[0]?.trim();
-  const isValidIp = ip && ip !== "::1" && ip !== "127.0.0.1";
-
-  return isValidIp ? ip : "unknown";
-}
-
 export const POST = async (req: NextRequest) => {
   const API_KEY = process.env.OPENAI_API_KEY;
   const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID;
@@ -50,16 +42,20 @@ export const POST = async (req: NextRequest) => {
     const cookieStore = cookies();
     const lastMessageTime = Number(cookieStore.get('lastMessage')?.value || 0);
     const openai = new OpenAI({ apiKey: API_KEY! });
+    const timeDiff = now - lastMessageTime;
 
     let context = contextType as ContextType;
 
-    if (now - lastMessageTime < 60_000) {
+    //TODO: Move this to the rate limit middleware
+    console.log("TimeDiff: " + timeDiff);
+
+    if (timeDiff < 120_000) {
       return NextResponse.json({ error: 'WAIT' }, { status: 429 });
     }
 
     const finalThreadId = threadId ?? cookieStore.get('threadId')?.value;
 
-    console.log("finalThreadId: ", finalThreadId);
+    console.log("finalThreadId: " + finalThreadId + ' and lastMsg: ' + lastMessageTime);
 
     // 1. Creates or reuse thread
     const thread = finalThreadId ? { id: finalThreadId } : await openai.beta.threads.create({
@@ -124,7 +120,7 @@ export const POST = async (req: NextRequest) => {
 
     headers.set('Set-Cookie', [
       `threadId=${thread.id}; Path=/; HttpOnly; Max-Age=31536000`,
-      `lastMessage=${now}; Path=/; HttpOnly; Max-Age=60`
+      `lastMessage=${now}; Path=/; HttpOnly; Max-Age=3600`
     ].join(', '));
 
     const responseMessage = responseMessages.at(0);

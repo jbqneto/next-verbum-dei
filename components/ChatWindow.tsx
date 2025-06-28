@@ -55,7 +55,7 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
     const threadId = Cookies.get('threadId');
     const lastMessage = Cookies.get('lastMessage');
 
-    console.log("LastMessage: " + lastMessage);
+    console.log("LastMessage: " + lastMessage + ' - thread: ' + threadId);
 
     setThreadId(threadId);
 
@@ -215,7 +215,7 @@ export default function ChatWindow({ selectedContext, language }: ChatWindowProp
     } finally {
       setLoading(false);
       setCooldown(COOLDOWN_MS);
-      Cookies.set('lastMessage', '' + Date.now());
+      Cookies.set('lastMessage', '' + Date.now(), { expires: 1 });
     }
 
   };
